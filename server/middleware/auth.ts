@@ -21,6 +21,10 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     return res.status(401).json({ error: 'Invalid token' });
   }
 
+  if (decoded.role === 'banned') {
+    return res.status(403).json({ error: 'Account disabled' });
+  }
+
   req.user = decoded;
   next();
 }

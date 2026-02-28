@@ -2,6 +2,7 @@ import { Router } from 'express';
 import prisma from '../lib/database';
 import { authenticate, requireRole } from '../middleware/auth';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 
@@ -156,6 +157,78 @@ router.get('/:id/points/transactions', authenticate, requireRole('ceo', 'staff')
   } catch (error) {
     console.error('List point tx error:', error);
     res.status(500).json({ error: 'Failed to list transactions' });
+  }
+});
+
+// Update user profile fields (staff/CEO)
+router.patch('/:id', authenticate, requireRole('ceo', 'staff'), async (req: any, res) => {
+  try {
+    const schema = z.object({
+      username: z.string().min(3).max(32).optional(),
+      email: z.string().email().optional(),
+    }).refine((v) => v.username !== undefined || v.email !== undefined, { message: 'No fields to update' });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
+    }
+    const { id } = req.params;
+    const data: any = {};
+    if (parsed.data.username) data.username = parsed.data.username;
+    if (parsed.data.email) data.email = parsed.data.email;
+    try {
+      const user = await prisma.user.update({ where: { id }, data });
+      res.json({ message: 'User updated', user: { id: user.id, username: user.username, email: user.email } });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        return res.status(409).json({ error: 'Username or email already in use' });
+      }
+      throw e;
+    }
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Set user password (CEO only)
+router.patch('/:id/password', authenticate, requireRole('ceo'), async (req: any, res) => {
+  try {
+    const schema = z.object({ password: z.string().min(6).max(128) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
+    }
+    const { id } = req.params;
+    const hashed = await bcrypt.hash(parsed.data.password, 10);
+    await prisma.user.update({ where: { id }, data: { password: hashed } });
+    res.json({ message: 'Password updated' });
+  } catch (error) {
+    console.error('Update password error:', error);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
+// Ban user (CEO only)
+router.patch('/:id/ban', authenticate, requireRole('ceo'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.update({ where: { id }, data: { role: 'banned' } });
+    res.json({ message: 'User banned', user: { id: user.id, role: user.role } });
+  } catch (error) {
+    console.error('Ban user error:', error);
+    res.status(500).json({ error: 'Failed to ban user' });
+  }
+});
+
+// Unban user (CEO only)
+router.patch('/:id/unban', authenticate, requireRole('ceo'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.update({ where: { id }, data: { role: 'customer' } });
+    res.json({ message: 'User unbanned', user: { id: user.id, role: user.role } });
+  } catch (error) {
+    console.error('Unban user error:', error);
+    res.status(500).json({ error: 'Failed to unban user' });
   }
 });
 
