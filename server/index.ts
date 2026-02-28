@@ -20,6 +20,7 @@ import notificationsRoutes from './routes/notifications';
 import analyticsRoutes from './routes/analytics';
 import abReportRoutes from './routes/ab-report';
 import giftCardRoutes from './routes/giftcards';
+import activityRoutes from './routes/activity';
 
 dotenv.config();
 
@@ -67,6 +68,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/report', abReportRoutes);
+app.use('/api/activity', activityRoutes);
 
 const staticDir = path.join(__dirname, 'public');
 if (fs.existsSync(staticDir)) {

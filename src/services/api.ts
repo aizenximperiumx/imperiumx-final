@@ -33,6 +33,15 @@ const api = {
       if (!response.ok) {
         const errData = await response.json().catch(() => null);
         const msg = (errData && (errData.message || errData.error)) || `Request failed (${response.status})`;
+        if (response.status === 403 && (msg.includes('Account disabled'))) {
+          try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          } catch {}
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
         throw new Error(msg);
       }
 
@@ -61,6 +70,15 @@ const api = {
       if (!response.ok) {
         const errData = await response.json().catch(() => null);
         const msg = (errData && (errData.message || errData.error)) || `Request failed (${response.status})`;
+        if (response.status === 403 && (msg.includes('Account disabled'))) {
+          try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          } catch {}
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
         throw new Error(msg);
       }
 
@@ -89,6 +107,15 @@ const api = {
       if (!response.ok) {
         const errData = await response.json().catch(() => null);
         const msg = (errData && (errData.message || errData.error)) || `Request failed (${response.status})`;
+        if (response.status === 403 && (msg.includes('Account disabled'))) {
+          try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          } catch {}
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
         throw new Error(msg);
       }
 
@@ -116,6 +143,15 @@ const api = {
       if (!response.ok) {
         const errData = await response.json().catch(() => null);
         const msg = (errData && (errData.message || errData.error)) || `Request failed (${response.status})`;
+        if (response.status === 403 && (msg.includes('Account disabled'))) {
+          try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          } catch {}
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
         throw new Error(msg);
       }
 

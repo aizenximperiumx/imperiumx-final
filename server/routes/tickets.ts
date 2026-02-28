@@ -5,6 +5,7 @@ import { generateOrderId, verifyToken } from '../lib/utils';
 import { z } from 'zod';
 import { addTicketClient, broadcastTicket } from '../lib/sse';
 import { broadcastUser } from '../lib/notify';
+import { logEvent } from '../lib/audit';
 
 const router = Router();
 
@@ -113,6 +114,7 @@ router.post('/', authenticate, async (req: any, res) => {
       message: 'Ticket created successfully',
       ticket,
     });
+    try { await logEvent('ticket.create', userId, { ticketId: ticket.id, type, priority: priority || 'normal' }); } catch {}
   } catch (error) {
     console.error('Create ticket error:', error);
     res.status(500).json({ error: 'Failed to create ticket' });
@@ -571,6 +573,7 @@ router.post('/:id/payment-confirmed', authenticate, requireRole('ceo'), async (r
       appliedCredit: result.appliedCredit,
       netAmount: result.netAmount,
     });
+    try { await logEvent('order.completed', result.ticket.userId, { orderId, amount, points: result.pointsEarned }); } catch {}
   } catch (error) {
     console.error('Confirm payment error:', error);
     res.status(500).json({ error: 'Failed to confirm payment' });

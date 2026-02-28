@@ -2,6 +2,7 @@ import { Router } from 'express';
 import prisma from '../lib/database';
 import { authenticate, requireRole } from '../middleware/auth';
 import { z } from 'zod';
+import { logEvent } from '../lib/audit';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.post('/generate', authenticate, requireRole('ceo'), async (req: any, res)
     });
 
     res.status(201).json({ message: 'Gift card generated', code: card.code, amount: card.balance });
+    try { await logEvent('giftcard.generate', req.user.userId, { code: card.code, amount }); } catch {}
   } catch (e) {
     console.error('Generate gift card error:', e);
     res.status(500).json({ error: 'Failed to generate gift card' });
@@ -68,6 +70,7 @@ router.post('/redeem', authenticate, async (req: any, res) => {
     });
 
     res.json({ message: 'Code redeemed', amount: result.amount, pointsAdded: result.points });
+    try { await logEvent('giftcard.redeem', req.user.userId, { amount: result.amount, points: result.points, code: input }); } catch {}
   } catch (e: any) {
     console.error('Redeem gift card error:', e);
     res.status(400).json({ error: e.message || 'Failed to redeem code' });

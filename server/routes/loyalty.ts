@@ -3,6 +3,7 @@ import prisma from '../lib/database';
 import { authenticate } from '../middleware/auth';
 import { z } from 'zod';
 import { broadcastUser } from '../lib/notify';
+import { logEvent } from '../lib/audit';
 
 const router = Router();
 
@@ -124,6 +125,7 @@ router.post('/redeem', authenticate, async (req: any, res) => {
       discount: result.discount,
       remainingPoints: result.remainingPoints,
     });
+    try { await logEvent('loyalty.redeem', req.user.userId, { points: parsed.data.points, discount: result.discount }); } catch {}
     try {
       broadcastUser(req.user.userId, {
         type: 'points',

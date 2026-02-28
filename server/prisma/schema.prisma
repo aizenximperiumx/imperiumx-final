@@ -154,3 +154,11 @@ model TicketNote {
 
   @@index([ticketId, createdAt])
 }
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  type      String
+  meta      Json?
+  createdAt DateTime @default(now())
+}

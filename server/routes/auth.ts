@@ -4,6 +4,7 @@ import prisma, { connectDB } from '../lib/database';
 import { generateToken, generateReferralCode } from '../lib/utils';
 import { authenticate } from '../middleware/auth';
 import { z } from 'zod';
+import { logEvent } from '../lib/audit';
 
 const router = Router();
 
@@ -96,6 +97,7 @@ router.post('/register', async (req, res) => {
         referralCode: user.referralCode,
       },
     });
+    try { await logEvent('user.register', user.id, { referralCode: providedCode || null, welcomePoints }); } catch {}
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Registration failed' });
@@ -148,6 +150,7 @@ router.post('/login', async (req, res) => {
         referralCode: user.referralCode,
       },
     });
+    try { await logEvent('user.login', user.id, {}); } catch {}
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });

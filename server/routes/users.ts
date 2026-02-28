@@ -3,6 +3,7 @@ import prisma from '../lib/database';
 import { authenticate, requireRole } from '../middleware/auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import { logEvent } from '../lib/audit';
 
 const router = Router();
 
@@ -178,6 +179,7 @@ router.patch('/:id', authenticate, requireRole('ceo', 'staff'), async (req: any,
     try {
       const user = await prisma.user.update({ where: { id }, data });
       res.json({ message: 'User updated', user: { id: user.id, username: user.username, email: user.email } });
+      try { await logEvent('admin.user.update', req.user.userId, { targetUserId: id, data }); } catch {}
     } catch (e: any) {
       if (e?.code === 'P2002') {
         return res.status(409).json({ error: 'Username or email already in use' });
@@ -202,6 +204,7 @@ router.patch('/:id/password', authenticate, requireRole('ceo'), async (req: any,
     const hashed = await bcrypt.hash(parsed.data.password, 10);
     await prisma.user.update({ where: { id }, data: { password: hashed } });
     res.json({ message: 'Password updated' });
+    try { await logEvent('admin.user.password', req.user.userId, { targetUserId: id }); } catch {}
   } catch (error) {
     console.error('Update password error:', error);
     res.status(500).json({ error: 'Failed to update password' });
@@ -214,6 +217,7 @@ router.patch('/:id/ban', authenticate, requireRole('ceo'), async (req: any, res)
     const { id } = req.params;
     const user = await prisma.user.update({ where: { id }, data: { role: 'banned' } });
     res.json({ message: 'User banned', user: { id: user.id, role: user.role } });
+    try { await logEvent('admin.user.ban', req.user.userId, { targetUserId: id }); } catch {}
   } catch (error) {
     console.error('Ban user error:', error);
     res.status(500).json({ error: 'Failed to ban user' });
@@ -226,6 +230,7 @@ router.patch('/:id/unban', authenticate, requireRole('ceo'), async (req: any, re
     const { id } = req.params;
     const user = await prisma.user.update({ where: { id }, data: { role: 'customer' } });
     res.json({ message: 'User unbanned', user: { id: user.id, role: user.role } });
+    try { await logEvent('admin.user.unban', req.user.userId, { targetUserId: id }); } catch {}
   } catch (error) {
     console.error('Unban user error:', error);
     res.status(500).json({ error: 'Failed to unban user' });

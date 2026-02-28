@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/database';
 import { authenticate } from '../middleware/auth';
+import { logEvent } from '../lib/audit';
 
 const router = Router();
 
@@ -128,6 +129,7 @@ router.post('/credit', authenticate, async (req: any, res) => {
       });
     });
     res.json({ status: 'credited', commission });
+    try { await logEvent('referral.credit', req.user.userId, { referrerId: user.referredBy, referredId: user.id, commission }); } catch {}
   } catch (e) {
     console.error('Referral credit error:', e);
     res.status(500).json({ error: 'Failed to credit referral' });

@@ -12,6 +12,7 @@ services:
       npm run build
       cd server
       npm ci
+      npx prisma generate
       npm run build
       mkdir -p dist/public
       cp -r ../dist/* dist/public/ || true
