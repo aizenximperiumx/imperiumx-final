@@ -1,0 +1,162 @@
+import { Router } from 'express';
+import prisma from '../lib/database';
+import { authenticate, requireRole } from '../middleware/auth';
+import { z } from 'zod';
+
+const router = Router();
+
+// Get all users (staff only)
+router.get('/', authenticate, requireRole('ceo', 'staff'), async (req: any, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        points: true,
+        tier: true,
+        level: true,
+        referralCode: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'Failed to get users' });
+  }
+});
+
+// Get user by ID (staff only)
+router.get('/:id', authenticate, requireRole('ceo', 'staff'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        tickets: true,
+        orders: true,
+        referrals: {
+          include: {
+            referred: {
+              select: {
+                username: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ error: 'Failed to get user' });
+  }
+});
+
+// Update user role (CEO only)
+router.patch('/:id/role', authenticate, requireRole('ceo'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { role },
+    });
+
+    res.json({
+      message: 'User role updated successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Update role error:', error);
+    res.status(500).json({ error: 'Failed to update user role' });
+  }
+});
+
+// Adjust user points (staff/CEO)
+router.post('/:id/points', authenticate, requireRole('ceo', 'staff'), async (req: any, res) => {
+  try {
+    const schema = z.object({
+      delta: z.number().int().refine(v => v !== 0, 'delta cannot be zero'),
+      reason: z.string().min(1).max(100),
+      meta: z.any().optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
+    }
+    const { id } = req.params;
+    const deltaNum = Number(parsed.data.delta);
+    const reasonStr = String(parsed.data.reason);
+    const metaVal = parsed.data.meta;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id } });
+      if (!user) return { error: 'User not found' } as any;
+
+      await tx.user.update({
+        where: { id },
+        data: { points: { increment: deltaNum } },
+      });
+
+      await tx.points.upsert({
+        where: { userId: id },
+        update: { balance: { increment: deltaNum } },
+        create: { userId: id, balance: Math.max(0, deltaNum) },
+      });
+
+      await tx.pointsTransaction.create({
+        data: { userId: id, delta: deltaNum, reason: reasonStr, meta: metaVal ?? { by: req.user.userId } },
+      });
+
+      const updated = await tx.user.findUnique({ where: { id } });
+      return { updatedPoints: updated?.points ?? 0 };
+    });
+
+    if ((result as any).error) {
+      return res.status(404).json({ error: (result as any).error });
+    }
+
+    res.json({ message: 'Points adjusted', points: result.updatedPoints });
+  } catch (error) {
+    console.error('Adjust points error:', error);
+    res.status(500).json({ error: 'Failed to adjust points' });
+  }
+});
+
+// List user point transactions (staff/CEO)
+router.get('/:id/points/transactions', authenticate, requireRole('ceo', 'staff'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+    const offset = parseInt(req.query.offset as string) || 0;
+    const txs = await prisma.pointsTransaction.findMany({
+      where: { userId: id },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
+    });
+    res.json(txs);
+  } catch (error) {
+    console.error('List point tx error:', error);
+    res.status(500).json({ error: 'Failed to list transactions' });
+  }
+});
+
+export default router;

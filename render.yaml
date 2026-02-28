@@ -1,0 +1,32 @@
+databases:
+  - name: imperiumx-db
+
+services:
+  - type: web
+    name: imperiumx-web
+    rootDir: .
+    env: node
+    plan: starter
+    buildCommand: |
+      npm ci
+      npm run build
+      cd server
+      npm ci
+      npm run build
+      mkdir -p dist/public
+      cp -r ../dist/* dist/public/ || true
+      npx prisma migrate deploy
+    startCommand: node server/dist/index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: imperiumx-db
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: GRAND_REOPENING_PROMO
+        value: "true"
