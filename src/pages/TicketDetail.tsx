@@ -443,151 +443,144 @@ export default function TicketDetail() {
           </div>
         )}
 
-        {/* Ticket Summary */}
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
-          <div className="md:col-span-2 lux-card lux-card-brand rounded-2xl p-6">
-            <div className="text-xl font-bold mb-4">{currentTicket.type === 'buying' ? 'Account Details' : 'Issue Summary'}</div>
-            {currentTicket.type === 'buying' ? (() => {
-              const lines = String(currentTicket.description || '').split('\n');
-              const get = (label: string) => {
-                const f = lines.find(l => l.trim().toLowerCase().startsWith(label.toLowerCase()));
-                return f ? f.split(':').slice(1).join(':').trim() : '';
-              };
-              const game = get('Game');
-              const price = get('Price Range');
-              const reqs = get('Requirements');
-              return (
-                <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="lux-card lux-card-brand rounded-2xl p-6">
+              <div className="text-xl font-bold mb-4">{currentTicket.type === 'buying' ? 'Request Details' : 'Issue Summary'}</div>
+              {currentTicket.type === 'buying' ? (() => {
+                const lines = String(currentTicket.description || '').split('\n');
+                const get = (label: string) => {
+                  const f = lines.find(l => l.trim().toLowerCase().startsWith(label.toLowerCase()));
+                  return f ? f.split(':').slice(1).join(':').trim() : '';
+                };
+                const game = get('Game');
+                const price = get('Price Range');
+                const reqs = get('Requirements');
+                return (
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                      <div className="text-sm text-gray-400">Game</div>
+                      <div className="font-semibold capitalize">{game || '—'}</div>
+                    </div>
+                    <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                      <div className="text-sm text-gray-400">Budget</div>
+                      <div className="font-semibold">{price || '—'}</div>
+                    </div>
+                    <div className="bg-white/10 rounded-xl p-4 border border-white/10 md:col-span-3">
+                      <div className="text-sm text-gray-400 mb-1">Requirements</div>
+                      <div className="whitespace-pre-wrap">{reqs || '—'}</div>
+                    </div>
+                  </div>
+                );
+              })() : (
+                <div className="space-y-3">
                   <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                    <div className="text-sm text-gray-400">Game</div>
-                    <div className="font-semibold capitalize">{game || '—'}</div>
+                    <div className="text-sm text-gray-400">Subject</div>
+                    <div className="font-semibold">{currentTicket.subject || currentTicket.id.substring(0,8)}</div>
                   </div>
                   <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                    <div className="text-sm text-gray-400">Budget</div>
-                    <div className="font-semibold">{price || '—'}</div>
-                  </div>
-                  <div className="bg-white/10 rounded-xl p-4 border border-white/10 md:col-span-3">
-                    <div className="text-sm text-gray-400 mb-1">Requirements</div>
-                    <div className="whitespace-pre-wrap">{reqs || '—'}</div>
+                    <div className="text-sm text-gray-400">Description</div>
+                    <div className="whitespace-pre-wrap">{currentTicket.description}</div>
                   </div>
                 </div>
-              );
-            })() : (
+              )}
+            </div>
+            <div className="lux-card lux-card-brand rounded-2xl p-6">
+              <div className="text-xl font-bold mb-4">Activity Timeline</div>
               <div className="space-y-3">
-                <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                  <div className="text-sm text-gray-400">Subject</div>
-                  <div className="font-semibold">{currentTicket.subject || currentTicket.id.substring(0,8)}</div>
-                </div>
-                <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                  <div className="text-sm text-gray-400">Description</div>
-                  <div className="whitespace-pre-wrap">{currentTicket.description}</div>
-                </div>
+                {timeline.map((t, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-red-500 mt-2" />
+                    <div>
+                      <div className="font-semibold">{t.label}</div>
+                      {t.time && <div className="text-sm text-gray-400">{t.time}</div>}
+                    </div>
+                  </div>
+                ))}
+                {timeline.length === 0 && <div className="text-gray-400 text-sm">No activity yet</div>}
               </div>
-            )}
+            </div>
           </div>
-          <div id="payment-card" className="lux-card lux-card-brand rounded-2xl p-6">
-            <div className="text-xl font-bold mb-4">Payment</div>
-            {currentTicket.type === 'buying' ? (
-              <div className="space-y-4 text-sm text-gray-300">
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div className="p-4 bg-white/10 rounded-xl">
-                    <div className="text-xs text-gray-400 mb-1">Choose Method</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {['crypto','paypal','cashapp','other'].map((m) => (
-                        <button
-                          key={m}
-                          onClick={() => setPaymentMethod(m)}
-                          className={`px-3 py-2 rounded-lg text-xs font-semibold ${paymentMethod === m ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-white/10 hover:bg-white/20'}`}
-                        >
-                          {m === 'cashapp' ? 'Cash App' : m.charAt(0).toUpperCase() + m.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-white/10 rounded-xl">
-                    <div className="text-xs text-gray-400 mb-2">Transaction Reference (optional)</div>
-                    <input
-                      type="text"
-                      value={txRef}
-                      onChange={(e) => setTxRef(e.target.value)}
-                      className="w-full px-3 py-2 bg-black/40 rounded-lg border border-white/10 focus:outline-none focus:border-red-500 text-white"
-                      placeholder={paymentMethod === 'crypto' ? 'Tx hash (e.g., 0x...)' : 'Payment reference or note'}
-                    />
-                    <div className="text-[11px] text-gray-400 mt-1">Adding a reference helps staff confirm faster.</div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/10 rounded-xl">
-                  <div className="text-xs text-gray-400 mb-1">How it works</div>
-                  <ol className="list-decimal list-inside space-y-1">
-                    <li>Staff shares exact amount and details in messages</li>
-                    <li>Send your payment via the selected method</li>
-                    <li>Click “I Sent the Payment” and add an optional reference</li>
-                    <li>We verify and deliver credentials promptly</li>
-                  </ol>
-                </div>
-
-                {storeCredit > 0 && (
-                  <div className="p-4 bg-white/10 rounded-xl border border-white/10">
-                    Store credit available: <span className="font-bold text-white">${storeCredit.toFixed(2)}</span>.
-                    It will automatically reduce your total when confirmed.
-                  </div>
-                )}
-
-                {(currentTicket as any)?.order?.amount ? (
-                  <div className="p-4 bg-white/10 rounded-xl border border-white/10">
-                    <div className="flex items-center justify-between">
-                      <div className="text-gray-400">Order Amount</div>
-                      <div className="font-bold text-white">${Number((currentTicket as any).order.amount).toFixed(2)}</div>
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <div className="text-gray-400">Store Credit Applied</div>
-                      <div className="font-bold text-white">-${Math.min(storeCredit, Number((currentTicket as any).order.amount)).toFixed(2)}</div>
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <div className="text-gray-400">Estimated Points Earned</div>
-                      <div className="font-bold text-white">
-                        {Math.max(0, Math.round((Number((currentTicket as any).order.amount) - Math.min(storeCredit, Number((currentTicket as any).order.amount))) * 10))} pts
+          <div className="space-y-6">
+            <div id="payment-card" className="lux-card lux-card-brand rounded-2xl p-6 sticky top-24">
+              <div className="text-xl font-bold mb-4">Actions</div>
+              {currentTicket.type === 'buying' ? (
+                <div className="space-y-4 text-sm text-gray-300">
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="p-4 bg-white/10 rounded-xl">
+                      <div className="text-xs text-gray-400 mb-1">Payment Method</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['crypto','paypal','cashapp','other'].map((m) => (
+                          <button
+                            key={m}
+                            onClick={() => setPaymentMethod(m)}
+                            className={`px-3 py-2 rounded-lg text-xs font-semibold ${paymentMethod === m ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-white/10 hover:bg-white/20'}`}
+                          >
+                            {m === 'cashapp' ? 'Cash App' : m.charAt(0).toUpperCase() + m.slice(1)}
+                          </button>
+                        ))}
                       </div>
                     </div>
+                    <div className="p-4 bg-white/10 rounded-xl">
+                      <div className="text-xs text-gray-400 mb-2">Transaction Reference</div>
+                      <input
+                        type="text"
+                        value={txRef}
+                        onChange={(e) => setTxRef(e.target.value)}
+                        className="w-full px-3 py-2 bg-black/40 rounded-lg border border-white/10 focus:outline-none focus:border-red-500 text-white"
+                        placeholder={paymentMethod === 'crypto' ? 'Tx hash (e.g., 0x...)' : 'Payment reference or note'}
+                      />
+                    </div>
                   </div>
-                ) : null}
-
-                <div className="p-4 bg-white/10 rounded-xl border border-white/10">
-                  <div className="text-xs text-gray-400 mb-2">Peace of mind</div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">Encrypted channels</span>
-                    <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">120-second warranty</span>
-                    <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-semibold">Priority support</span>
-                  </div>
+                  {storeCredit > 0 && (
+                    <div className="p-4 bg-white/10 rounded-xl border border-white/10">
+                      Store credit: <span className="font-bold text-white">${storeCredit.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {(currentTicket as any)?.order?.amount ? (
+                    <div className="p-4 bg-white/10 rounded-xl border border-white/10">
+                      <div className="flex items-center justify-between">
+                        <div className="text-gray-400">Order Amount</div>
+                        <div className="font-bold text-white">${Number((currentTicket as any).order.amount).toFixed(2)}</div>
+                      </div>
+                    </div>
+                  ) : null}
+                  {canShowOrderPaid && (
+                    <button
+                      onClick={handleOrderPaid}
+                      className="w-full py-3 bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-xl font-bold hover:opacity-90"
+                    >
+                      I Sent the Payment
+                    </button>
+                  )}
+                  {canShowPaymentConfirmed && (
+                    <button
+                      onClick={() => setShowPaymentModal(true)}
+                      className="w-full py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-xl font-bold hover:opacity-90"
+                    >
+                      Confirm Payment
+                    </button>
+                  )}
+                  {(isStaff || isCEO) && currentTicket.status === 'completed' && (
+                    <button
+                      onClick={() => setDeliverOpen(true)}
+                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl font-bold hover:opacity-90"
+                    >
+                      Deliver Credentials
+                    </button>
+                  )}
+                  {(isCEO) && !isClosed && (
+                    <button
+                      onClick={handleCloseTicket}
+                      className="w-full py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-xl font-bold hover:opacity-90"
+                    >
+                      Close Ticket
+                    </button>
+                  )}
                 </div>
-
-                {canShowOrderPaid && (
-                  <button
-                    onClick={handleOrderPaid}
-                    className="w-full py-3 bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-xl font-bold hover:opacity-90"
-                  >
-                    I Sent the Payment
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-300">Support request. Staff will respond shortly.</div>
-            )}
-          </div>
-          <div className="lux-card lux-card-brand rounded-2xl p-6">
-            <div className="text-xl font-bold mb-4">Activity Timeline</div>
-            <div className="space-y-3">
-              {timeline.map((t, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-red-500 mt-2" />
-                  <div>
-                    <div className="font-semibold">{t.label}</div>
-                    {t.time && <div className="text-sm text-gray-400">{t.time}</div>}
-                  </div>
-                </div>
-              ))}
-              {timeline.length === 0 && <div className="text-gray-400 text-sm">No activity yet</div>}
+              ) : (
+                <div className="text-sm text-gray-300">Support request. Staff will respond shortly.</div>
+              )}
             </div>
           </div>
         </div>
