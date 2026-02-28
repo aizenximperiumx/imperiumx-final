@@ -33,7 +33,6 @@ const Notifications = lazy(() => import('./pages/Notifications'));
 const StaffReviews = lazy(() => import('./pages/StaffReviews'));
 const Profile = lazy(() => import('./pages/Profile'));
 const DesignSystem = lazy(() => import('./pages/DesignSystem'));
-const Concept = lazy(() => import('./pages/Concept'));
 
 function Navbar() {
   const { isAuthenticated, user, token, logout, isStaff } = useAuth();
@@ -93,10 +92,7 @@ function Navbar() {
                   <div className="absolute left-0 mt-2 min-w-[220px] bg-black/90 border border-white/10 rounded-xl shadow-xl z-50 p-2">
                     {isAuthenticated ? (
                       <>
-                        <Link to="/concept" onClick={() => setMoreOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10">
-                          <SparkIcon className="w-4 h-4" />
-                          <span>Concept</span>
-                        </Link>
+                        
                         <Link to="/tickets" onClick={() => setMoreOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10">
                           <TicketIcon className="w-4 h-4" />
                           <span>My Tickets</span>
@@ -129,10 +125,7 @@ function Navbar() {
                       </>
                     ) : (
                       <>
-                        <Link to="/concept" onClick={() => setMoreOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10">
-                          <SparkIcon className="w-4 h-4" />
-                          <span>Concept</span>
-                        </Link>
+                        
                         <Link to="/login" onClick={() => setMoreOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10">
                           <LoginIcon className="w-4 h-4" />
                           <span>Login</span>
@@ -234,7 +227,6 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/design" element={<DesignSystem />} />
-          <Route path="/concept" element={<Concept />} />
         </Routes>
       </Suspense>
       <BottomNav />
