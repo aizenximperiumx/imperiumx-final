@@ -132,18 +132,20 @@ export default function StaffHub() {
             </div>
           </Card>
 
-          <Card variant="lux" color="brand" padded className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-xl font-bold">Activity Feed</div>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10">Admin</span>
-            </div>
-            <p className="text-gray-400 text-sm">Live view of registrations, orders and more.</p>
-            <div className="pt-2">
-              <button onClick={() => navigate('/staff/activity')} className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 rounded-xl font-bold hover:opacity-90">
-                View Activity
-              </button>
-            </div>
-          </Card>
+          {isCEO && (
+            <Card variant="lux" color="brand" padded className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xl font-bold">Activity Feed</div>
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10">CEO</span>
+              </div>
+              <p className="text-gray-400 text-sm">Live view of registrations, orders and more.</p>
+              <div className="pt-2">
+                <button onClick={() => navigate('/staff/activity')} className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 rounded-xl font-bold hover:opacity-90">
+                  View Activity
+                </button>
+              </div>
+            </Card>
+          )}
 
           {isCEO && (
             <Card variant="lux" color="brand" padded className="space-y-3">

@@ -146,9 +146,23 @@ export default function StaffUsers() {
               </div>
               <div className="flex gap-3">
                 <Button onClick={() => doUpdateInfo(u.id, u.username, u.email)} disabled={saving === u.id}>Save</Button>
-                <Input placeholder="Points delta (e.g., 100 or -50)" onChange={e => (u as any)._delta = parseInt(e.target.value || '0', 10)} />
+                <Input type="number" placeholder="Points delta (e.g., 100 or -50)" onChange={e => (u as any)._delta = parseInt(e.target.value || '0', 10)} />
                 <Input placeholder="Reason" onChange={e => (u as any)._reason = e.target.value} />
-                <Button variant="secondary" onClick={() => doAdjustPoints(u.id, Number((u as any)._delta || 0), String((u as any)._reason || 'manual_adjust'))} disabled={saving === u.id}>Adjust</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const d = Number((u as any)._delta);
+                    const r = String((u as any)._reason || 'manual_adjust');
+                    if (!d || Number.isNaN(d)) {
+                      setMsg('Enter a non-zero delta');
+                      return;
+                    }
+                    doAdjustPoints(u.id, d, r);
+                  }}
+                  disabled={saving === u.id}
+                >
+                  Adjust
+                </Button>
               </div>
               {isCEO && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">

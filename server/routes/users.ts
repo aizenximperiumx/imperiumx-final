@@ -117,11 +117,13 @@ router.post('/:id/points', authenticate, requireRole('ceo', 'staff'), async (req
         data: { points: { increment: deltaNum } },
       });
 
-      await tx.points.upsert({
-        where: { userId: id },
-        update: { balance: { increment: deltaNum } },
-        create: { userId: id, balance: Math.max(0, deltaNum) },
-      });
+    const p = await tx.points.findUnique({ where: { userId: id } });
+    if (p) {
+      await tx.points.update({ where: { userId: id }, data: { balance: { increment: deltaNum } } });
+    } else {
+      const base = Math.max(0, (user.points || 0) + deltaNum);
+      await tx.points.create({ data: { userId: id, balance: base } });
+    }
 
       await tx.pointsTransaction.create({
         data: { userId: id, delta: deltaNum, reason: reasonStr, meta: metaVal ?? { by: req.user.userId } },

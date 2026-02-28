@@ -7,14 +7,14 @@ import Card from '../components/ui/Card';
 
 type Item = {
   id: string;
-  userId?: string | null;
   type: string;
-  meta?: any;
+  actor?: { id: string; username: string; role: string } | null;
+  message: string;
   createdAt: string;
 };
 
 export default function StaffActivity() {
-  const { token, isStaff } = useAuth();
+  const { token, isCEO } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -22,7 +22,7 @@ export default function StaffActivity() {
 
   useEffect(() => {
     const load = async () => {
-      if (!token || !isStaff) return;
+      if (!token || !isCEO) return;
       setLoading(true);
       try {
         const params = new URLSearchParams();
@@ -34,18 +34,18 @@ export default function StaffActivity() {
       setLoading(false);
     };
     load();
-  }, [token, isStaff, type]);
+  }, [token, isCEO, type]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return items;
     return items.filter(i => {
-      const parts = [i.type, i.userId || '', JSON.stringify(i.meta || {})];
+      const parts = [i.type, i.actor?.username || '', i.message];
       return parts.some(p => String(p).toLowerCase().includes(q));
     });
   }, [items, query]);
 
-  if (!isStaff) return <div className="min-h-screen flex items-center justify-center">Staff only</div>;
+  if (!isCEO) return <div className="min-h-screen flex items-center justify-center">CEO only</div>;
 
   const types = [
     'user.register',
@@ -94,10 +94,8 @@ export default function StaffActivity() {
                 <div className="font-bold">{i.type}</div>
                 <div className="text-xs text-gray-400">{new Date(i.createdAt).toLocaleString()}</div>
               </div>
-              <div className="text-xs text-gray-300 mt-2">User: {i.userId || '—'}</div>
-              <div className="mt-2 text-gray-200 text-sm">
-                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(i.meta || {}, null, 2)}</pre>
-              </div>
+              <div className="text-xs text-gray-300 mt-2">Actor: {i.actor?.username || '—'}{i.actor?.role ? ` • ${i.actor.role}` : ''}</div>
+              <div className="mt-2 text-gray-200 text-sm">{i.message}</div>
             </Card>
           ))}
         </div>
