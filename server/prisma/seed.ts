@@ -23,6 +23,7 @@ async function main() {
       tier: 'gold',
       level: 1,
       referralCode: 'AIZEN25',
+      discord: 'aizen',
     },
   });
 
@@ -39,6 +40,7 @@ async function main() {
       tier: 'bronze',
       level: 1,
       referralCode: 'XZIN25',
+      discord: 'xzin123',
     },
   });
 
@@ -54,6 +56,7 @@ async function main() {
       tier: 'bronze',
       level: 1,
       referralCode: 'JUJU25',
+      discord: 'Juju',
     },
   });
 
@@ -69,6 +72,7 @@ async function main() {
       tier: 'bronze',
       level: 1,
       referralCode: 'ITZEN25',
+      discord: 'Itzendever',
     },
   });
 

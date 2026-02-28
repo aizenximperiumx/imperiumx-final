@@ -53,6 +53,45 @@ export default function Home() {
             <Link to="/tickets/create?type=support" className="px-8 py-4 bg-white/[0.06] rounded-xl font-bold text-lg hover:bg-white/10 transition-all border border-white/10">
               Open Support Ticket
             </Link>
+            <a
+              href="https://discord.gg/dCWxyNuyG4"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ring-glow px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-700 rounded-xl font-bold text-lg hover:opacity-95 transition-all shadow-lg shadow-indigo-500/30 border border-indigo-400/30 inline-flex items-center gap-3"
+              title="Official ImperiumX Discord Server"
+            >
+              <DiscordIcon className="w-6 h-6" />
+              Join Discord
+              <span className="ml-2 px-2 py-1 rounded-full text-xs font-semibold bg-white/10">Official Server</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Discord Highlight */}
+      <section className="py-6 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="lux-card lux-card-brand rounded-2xl p-8 border-2 border-indigo-500/30 shadow-2xl shadow-indigo-500/30">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-indigo-600/30">
+                  <DiscordIcon className="w-8 h-8 text-indigo-300" />
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold">Join Our Official Discord</div>
+                  <div className="text-gray-300 text-sm">Support, announcements, drops and private offers</div>
+                </div>
+              </div>
+              <a
+                href="https://discord.gg/dCWxyNuyG4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ring-glow px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-700 rounded-xl font-bold text-lg hover:opacity-95 transition-all inline-flex items-center gap-3 border border-indigo-400/30"
+              >
+                <DiscordIcon className="w-6 h-6" />
+                Join Discord
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -145,5 +184,13 @@ export default function Home() {
         </div>
       </section>
     </div>
+  );
+}
+
+function DiscordIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+      <path d="M20.317 4.369A18.886 18.886 0 0 0 16.671 3c-.179.33-.381.777-.523 1.128a17.31 17.31 0 0 0-4.297 0c-.15-.36-.355-.82-.536-1.151a18.91 18.91 0 0 0-3.647 1.371C4.06 7.54 3.256 10.567 3.492 13.546a18.85 18.85 0 0 0 5.64 2.871c.272-.376.578-.86.79-1.254a11.71 11.71 0 0 1-1.855-.891c.155-.113.307-.232.453-.355 3.609 1.693 7.514 1.693 11.079 0 .147.123.299.242.453.355-.6.36-1.219.654-1.855.891.213.394.514.878.79 1.254a18.82 18.82 0 0 0 5.642-2.87c.369-4.626-.63-7.606-2.962-9.643ZM9.596 12.838c-.86 0-1.563-.79-1.563-1.76 0-.969.692-1.76 1.563-1.76.88 0 1.574.801 1.563 1.76 0 .97-.692 1.76-1.563 1.76Zm4.818 0c-.86 0-1.563-.79-1.563-1.76 0-.969.692-1.76 1.563-1.76.881 0 1.574.801 1.563 1.76 0 .97-.682 1.76-1.563 1.76Z" />
+    </svg>
   );
 }

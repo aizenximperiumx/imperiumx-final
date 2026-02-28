@@ -18,6 +18,7 @@ model User {
   level        Int       @default(1)
   referralCode String    @unique
   referredBy   String?
+  discord      String    @default("")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   tickets      Ticket[]
@@ -31,6 +32,8 @@ model User {
   giftCardsRedeemed GiftCard[] @relation("redeemedBy")
   reviews      Review[]
   notesAuthored TicketNote[]
+
+  @@index([role, createdAt])
 }
 
 model Ticket {

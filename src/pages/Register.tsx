@@ -11,6 +11,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [discord, setDiscord] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -87,6 +88,14 @@ export default function Register() {
       setError('Passwords do not match');
       return false;
     }
+    if (!discord.trim()) {
+      setError('Discord username is required');
+      return false;
+    }
+    if (!/^[a-zA-Z0-9._]{2,32}$/.test(discord.trim())) {
+      setError('Enter your Discord username (no spaces; letters, numbers, . or _)');
+      return false;
+    }
     if (referralCode.trim()) {
       const code = referralCode.trim().toUpperCase();
       if (!/^[A-Z0-9]{6,12}$/.test(code)) {
@@ -116,7 +125,7 @@ export default function Register() {
 
     try {
       const code = referralCode.trim() ? referralCode.trim().toUpperCase() : undefined;
-      const data = await api.post('/auth/register', { username, email, password, referralCode: code });
+      const data = await api.post('/auth/register', { username, email, password, referralCode: code, discord: discord.trim() });
       login(data.token, data.user);
       setSuccess('Account created successfully. Redirecting...');
       setTimeout(() => navigate('/'), 2000);
@@ -235,6 +244,15 @@ export default function Register() {
             placeholder="Choose a username"
             required
             autoComplete="username"
+          />
+          <Input
+            label="Discord Username (not nickname)"
+            type="text"
+            value={discord}
+            onChange={(e) => setDiscord(e.target.value)}
+            placeholder="e.g., gamer.pro or cool_name"
+            required
+            autoComplete="off"
           />
 
           <Input

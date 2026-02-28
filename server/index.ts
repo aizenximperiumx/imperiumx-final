@@ -21,6 +21,7 @@ import analyticsRoutes from './routes/analytics';
 import abReportRoutes from './routes/ab-report';
 import giftCardRoutes from './routes/giftcards';
 import activityRoutes from './routes/activity';
+import { rateLimit as customRateLimit } from './middleware/rateLimit';
 
 dotenv.config();
 
@@ -69,6 +70,11 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/report', abReportRoutes);
 app.use('/api/activity', activityRoutes);
+
+// Rate limits
+app.use('/api/auth/register', customRateLimit({ windowMs: 5 * 60 * 1000, max: 10 }));
+app.use('/api/auth/login', customRateLimit({ windowMs: 5 * 60 * 1000, max: 20 }));
+app.use('/api/tickets', customRateLimit({ windowMs: 2 * 60 * 1000, max: 60 }));
 
 const staticDir = path.join(__dirname, 'public');
 if (fs.existsSync(staticDir)) {

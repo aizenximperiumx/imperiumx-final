@@ -54,13 +54,13 @@ export default function StaffUsers() {
 
   if (!isStaff) return <div className="min-h-screen flex items-center justify-center">Staff only</div>;
 
-  const doUpdateInfo = async (id: string, username: string, email: string) => {
+  const doUpdateInfo = async (id: string, username: string, email: string, discord?: string) => {
     if (!token) return;
     setSaving(id);
     setMsg('');
     try {
-      await api.patch(`/users/${id}`, { username, email }, { headers: { Authorization: `Bearer ${token}` } });
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, username, email } : u));
+      await api.patch(`/users/${id}`, { username, email, discord }, { headers: { Authorization: `Bearer ${token}` } });
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, username, email, discord: discord ?? (u as any).discord } : u));
       setMsg('Saved');
     } catch (e: any) {
       setMsg(e?.message || 'Failed to save');
@@ -108,11 +108,31 @@ export default function StaffUsers() {
     setMsg('');
     try {
       const path = ban ? `/users/${id}/ban` : `/users/${id}/unban`;
-      const res = await api.patch(path, {}, { headers: { Authorization: `Bearer ${token}` } });
+      const reason = (uMap[id]?.reason || '');
+      const res = await api.patch(path, { reason }, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(prev => prev.map(u => u.id === id ? { ...u, role: res?.user?.role || (ban ? 'banned' : 'customer') } : u));
       setMsg(ban ? 'User banned' : 'User unbanned');
     } catch (e: any) {
       setMsg(e?.message || 'Failed to update role');
+    } finally {
+      setSaving(null);
+    }
+  };
+  const uMap: Record<string, any> = {};
+  users.forEach(u => { uMap[u.id] = uMap[u.id] || {}; });
+
+  const doImpersonate = async (id: string) => {
+    if (!token || !isCEO) return;
+    setSaving(id);
+    try {
+      const data = await api.post(`/auth/impersonate/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      localStorage.setItem('token_backup', String(token));
+      localStorage.setItem('user_backup', JSON.stringify((useAuth() as any)?.user || {}));
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.location.href = '/';
+    } catch (e: any) {
+      setMsg(e?.message || 'Failed to impersonate');
     } finally {
       setSaving(null);
     }
@@ -140,12 +160,13 @@ export default function StaffUsers() {
                 <div className="font-bold">{u.username}</div>
                 <div className="text-xs text-gray-400">{u.role} • {u.points} pts</div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 <Input label="Username" defaultValue={u.username} onChange={e => (u.username = e.target.value)} />
                 <Input label="Email" defaultValue={u.email} onChange={e => (u.email = e.target.value)} />
+                <Input label="Discord" defaultValue={(u as any).discord || ''} onChange={e => ((u as any).discord = e.target.value)} />
               </div>
               <div className="flex gap-3">
-                <Button onClick={() => doUpdateInfo(u.id, u.username, u.email)} disabled={saving === u.id}>Save</Button>
+                <Button onClick={() => doUpdateInfo(u.id, u.username, u.email, (u as any).discord)} disabled={saving === u.id}>Save</Button>
                 <Input type="number" placeholder="Points delta (e.g., 100 or -50)" onChange={e => (u as any)._delta = parseInt(e.target.value || '0', 10)} />
                 <Input placeholder="Reason" onChange={e => (u as any)._reason = e.target.value} />
                 <Button
@@ -174,7 +195,9 @@ export default function StaffUsers() {
                     ) : (
                       <Button variant="danger" onClick={() => doBan(u.id, true)} disabled={saving === u.id}>Ban</Button>
                     )}
+                    <Button variant="ghost" onClick={() => doImpersonate(u.id)} disabled={saving === u.id}>Impersonate</Button>
                   </div>
+                  <Input placeholder="Ban/Unban reason (optional)" onChange={e => (uMap[u.id].reason = e.target.value)} />
                 </div>
               )}
             </Card>

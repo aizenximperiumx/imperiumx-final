@@ -9,6 +9,7 @@ interface User {
   tier: string;
   level: number;
   referralCode: string;
+  discord?: string;
 }
 
 interface AuthContextType {

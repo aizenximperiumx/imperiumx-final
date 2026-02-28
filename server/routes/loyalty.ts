@@ -162,4 +162,35 @@ router.get('/credit', authenticate, async (req: any, res) => {
   }
 });
 
+// CEO: list all points transactions
+router.get('/transactions/all', authenticate, async (req: any, res) => {
+  try {
+    if (req.user.role !== 'ceo') return res.status(403).json({ error: 'Insufficient permissions' });
+    const limit = Math.min(parseInt(req.query.limit as string) || 200, 500);
+    const offset = parseInt(req.query.offset as string) || 0;
+    const txs = await prisma.pointsTransaction.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset,
+    });
+    const ids = Array.from(new Set(txs.map(t => t.userId)));
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, username: true, email: true, role: true, discord: true },
+    });
+    const byId = new Map(users.map(u => [u.id, u]));
+    const items = txs.map(t => ({
+      id: t.id,
+      user: byId.get(t.userId),
+      delta: t.delta,
+      reason: t.reason,
+      meta: t.meta,
+      createdAt: t.createdAt,
+    }));
+    res.json(items);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to load transactions' });
+  }
+});
+
 export default router;

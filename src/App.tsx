@@ -20,6 +20,7 @@ const StaffKanban = lazy(() => import('./pages/StaffKanban'));
 const ABReport = lazy(() => import('./pages/ABReport'));
 const StaffHub = lazy(() => import('./pages/StaffHub'));
 const StaffUsers = lazy(() => import('./pages/StaffUsers'));
+const StaffLedger = lazy(() => import('./pages/StaffLedger'));
 const StaffActivity = lazy(() => import('./pages/StaffActivity'));
 const Loyalty = lazy(() => import('./pages/Loyalty'));
 const Referral = lazy(() => import('./pages/Referral'));
@@ -220,6 +221,7 @@ function AppContent() {
           <Route path="/staff/kanban" element={<StaffKanban />} />
           <Route path="/staff/ab" element={<ABReport />} />
           <Route path="/staff/users" element={<StaffUsers />} />
+          <Route path="/staff/ledger" element={<StaffLedger />} />
           <Route path="/staff/activity" element={<StaffActivity />} />
           <Route path="/loyalty" element={<Loyalty />} />
           <Route path="/referral" element={<Referral />} />

@@ -38,6 +38,7 @@ router.get('/', authenticate, async (req: any, res) => {
             select: {
               username: true,
               email: true,
+              discord: true,
             },
           },
           assignedUser: {
@@ -138,6 +139,7 @@ router.get('/:id', authenticate, async (req: any, res) => {
             email: true,
             tier: true,
             points: true,
+            discord: true,
           },
         },
         assignedUser: {

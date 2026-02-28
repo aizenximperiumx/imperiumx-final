@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma, { connectDB } from '../lib/database';
 import { generateToken, generateReferralCode } from '../lib/utils';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireRole } from '../middleware/auth';
 import { z } from 'zod';
 import { logEvent } from '../lib/audit';
 
@@ -16,12 +16,13 @@ router.post('/register', async (req, res) => {
       email: z.string().email(),
       password: z.string().min(6).max(128),
       referralCode: z.string().max(16).optional(),
+      discord: z.string().min(2).max(32).regex(/^[a-zA-Z0-9._]+$/),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
     }
-    const { username, email, password, referralCode: providedCode } = parsed.data;
+    const { username, email, password, referralCode: providedCode, discord } = parsed.data;
 
     // Check if user exists
     const existingUser = await prisma.user.findFirst({
@@ -66,6 +67,7 @@ router.post('/register', async (req, res) => {
         level: 1,
         referralCode,
         referredBy,
+        discord,
       },
     });
 
@@ -97,7 +99,7 @@ router.post('/register', async (req, res) => {
         referralCode: user.referralCode,
       },
     });
-    try { await logEvent('user.register', user.id, { referralCode: providedCode || null, welcomePoints }); } catch {}
+    try { await logEvent('user.register', user.id, { referralCode: providedCode || null, welcomePoints, discord }); } catch {}
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Registration failed' });
@@ -181,12 +183,37 @@ router.get('/me', authenticate, async (req: any, res) => {
       tier: user.tier,
       level: user.level,
       referralCode: user.referralCode,
+      discord: user.discord,
       tickets: user.tickets,
       orders: user.orders,
     });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });
+  }
+});
+
+// CEO: impersonate a user, return a token
+router.post('/impersonate/:id', authenticate, requireRole('ceo'), async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const token = generateToken(user.id, user.role);
+    try { await logEvent('admin.impersonate', req.user.userId, { targetUserId: id }); } catch {}
+    res.json({ token, user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      points: user.points,
+      tier: user.tier,
+      level: user.level,
+      referralCode: user.referralCode,
+      discord: user.discord,
+    } });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to impersonate' });
   }
 });
 

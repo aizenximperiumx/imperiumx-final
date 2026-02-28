@@ -730,8 +730,8 @@ export default function TicketDetail() {
               <h3 className="font-bold mb-3 text-purple-400">Customer Information</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <div className="text-gray-400 text-sm">Username</div>
-                  <div className="font-semibold">{currentTicket.user.username}</div>
+                  <div className="text-gray-400 text-sm">Discord</div>
+                  <div className="font-semibold">{(currentTicket as any).user.discord || '—'}</div>
                 </div>
                 <div>
                   <div className="text-gray-400 text-sm">Email</div>
@@ -915,7 +915,7 @@ export default function TicketDetail() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-bold text-sm">
-                        {msg.sender === 'staff' ? 'Staff' : 'Customer'}
+                        {msg.sender === 'staff' ? (currentTicket.assignedUser?.username ? `Staff • ${currentTicket.assignedUser.username}` : 'Staff') : ((currentTicket as any).user.discord || 'Customer')}
                       </span>
                       <span className="text-xs opacity-70">
                         {new Date(msg.timestamp).toLocaleString()}

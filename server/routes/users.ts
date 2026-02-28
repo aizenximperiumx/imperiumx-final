@@ -170,7 +170,8 @@ router.patch('/:id', authenticate, requireRole('ceo', 'staff'), async (req: any,
     const schema = z.object({
       username: z.string().min(3).max(32).optional(),
       email: z.string().email().optional(),
-    }).refine((v) => v.username !== undefined || v.email !== undefined, { message: 'No fields to update' });
+      discord: z.string().regex(/^[a-zA-Z0-9._]{2,32}$/).optional(),
+    }).refine((v) => v.username !== undefined || v.email !== undefined || v.discord !== undefined, { message: 'No fields to update' });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
@@ -179,6 +180,7 @@ router.patch('/:id', authenticate, requireRole('ceo', 'staff'), async (req: any,
     const data: any = {};
     if (parsed.data.username) data.username = parsed.data.username;
     if (parsed.data.email) data.email = parsed.data.email;
+    if (parsed.data.discord) data.discord = parsed.data.discord;
     try {
       const user = await prisma.user.update({ where: { id }, data });
       res.json({ message: 'User updated', user: { id: user.id, username: user.username, email: user.email } });
@@ -218,9 +220,10 @@ router.patch('/:id/password', authenticate, requireRole('ceo'), async (req: any,
 router.patch('/:id/ban', authenticate, requireRole('ceo'), async (req: any, res) => {
   try {
     const { id } = req.params;
+    const reason = String(req.body?.reason || '').trim() || undefined;
     const user = await prisma.user.update({ where: { id }, data: { role: 'banned' } });
     res.json({ message: 'User banned', user: { id: user.id, role: user.role } });
-    try { await logEvent('admin.user.ban', req.user.userId, { targetUserId: id }); } catch {}
+    try { await logEvent('admin.user.ban', req.user.userId, { targetUserId: id, reason }); } catch {}
   } catch (error) {
     console.error('Ban user error:', error);
     res.status(500).json({ error: 'Failed to ban user' });
@@ -231,9 +234,10 @@ router.patch('/:id/ban', authenticate, requireRole('ceo'), async (req: any, res)
 router.patch('/:id/unban', authenticate, requireRole('ceo'), async (req: any, res) => {
   try {
     const { id } = req.params;
+    const reason = String(req.body?.reason || '').trim() || undefined;
     const user = await prisma.user.update({ where: { id }, data: { role: 'customer' } });
     res.json({ message: 'User unbanned', user: { id: user.id, role: user.role } });
-    try { await logEvent('admin.user.unban', req.user.userId, { targetUserId: id }); } catch {}
+    try { await logEvent('admin.user.unban', req.user.userId, { targetUserId: id, reason }); } catch {}
   } catch (error) {
     console.error('Unban user error:', error);
     res.status(500).json({ error: 'Failed to unban user' });

@@ -34,6 +34,8 @@ export default function StaffActivity() {
       setLoading(false);
     };
     load();
+    const iv = setInterval(load, 10000);
+    return () => clearInterval(iv);
   }, [token, isCEO, type]);
 
   const filtered = useMemo(() => {
