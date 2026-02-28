@@ -138,6 +138,7 @@ router.post('/:id/points', authenticate, requireRole('ceo', 'staff'), async (req
     }
 
     res.json({ message: 'Points adjusted', points: result.updatedPoints });
+  try { await logEvent('admin.points.adjust', req.user.userId, { targetUserId: id, delta: deltaNum, reason: reasonStr }); } catch {}
   } catch (error) {
     console.error('Adjust points error:', error);
     res.status(500).json({ error: 'Failed to adjust points' });
