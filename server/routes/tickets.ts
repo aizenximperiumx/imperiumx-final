@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { addTicketClient, broadcastTicket } from '../lib/sse';
 import { broadcastUser } from '../lib/notify';
 import { logEvent } from '../lib/audit';
+import { sendMail } from '../lib/mail';
 
 const router = Router();
 
@@ -116,6 +117,13 @@ router.post('/', authenticate, async (req: any, res) => {
       ticket,
     });
     try { await logEvent('ticket.create', userId, { ticketId: ticket.id, type, priority: priority || 'normal' }); } catch {}
+    try {
+      const staff = await prisma.user.findMany({ where: { OR: [{ role: 'staff' }, { role: 'ceo' }] }, select: { email: true } });
+      const emails = staff.map(s => s.email).filter(Boolean);
+      if (emails.length > 0) {
+        await sendMail(emails, 'New ticket opened', `<div style="font-family:Arial;padding:16px">New ticket ${ticket.id} • ${type}</div>`);
+      }
+    } catch {}
   } catch (error) {
     console.error('Create ticket error:', error);
     res.status(500).json({ error: 'Failed to create ticket' });
@@ -342,6 +350,20 @@ router.post('/:id/messages', authenticate, async (req: any, res) => {
       message: 'Message sent successfully',
       data: newMessage,
     });
+    try {
+      const t = await prisma.ticket.findUnique({ where: { id }, include: { user: true, assignedUser: true } });
+      if (t) {
+        if (role === 'ceo' || role === 'staff') {
+          if (t.user?.email) await sendMail(t.user.email, 'Ticket update', `<div style="font-family:Arial;padding:16px">Your ticket ${t.id} has a new reply.</div>`);
+        } else {
+          const emails: string[] = [];
+          if (t.assignedUser?.email) emails.push(t.assignedUser.email!);
+          const staff = await prisma.user.findMany({ where: { OR: [{ role: 'staff' }, { role: 'ceo' }] }, select: { email: true } });
+          for (const s of staff) if (s.email) emails.push(s.email);
+          if (emails.length) await sendMail(emails, 'Ticket update', `<div style="font-family:Arial;padding:16px">Ticket ${t.id} updated by customer.</div>`);
+        }
+      }
+    } catch {}
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ error: 'Failed to send message' });

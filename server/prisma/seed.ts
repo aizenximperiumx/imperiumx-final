@@ -24,6 +24,7 @@ async function main() {
       level: 1,
       referralCode: 'AIZEN25',
       discord: 'aizen',
+      emailVerified: true,
     },
   });
 
@@ -41,6 +42,7 @@ async function main() {
       level: 1,
       referralCode: 'XZIN25',
       discord: 'xzin123',
+      emailVerified: true,
     },
   });
 
@@ -57,6 +59,7 @@ async function main() {
       level: 1,
       referralCode: 'JUJU25',
       discord: 'Juju',
+      emailVerified: true,
     },
   });
 
@@ -73,6 +76,7 @@ async function main() {
       level: 1,
       referralCode: 'ITZEN25',
       discord: 'Itzendever',
+      emailVerified: true,
     },
   });
 

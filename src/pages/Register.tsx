@@ -13,6 +13,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [discord, setDiscord] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [verifyMode, setVerifyMode] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -126,9 +128,14 @@ export default function Register() {
     try {
       const code = referralCode.trim() ? referralCode.trim().toUpperCase() : undefined;
       const data = await api.post('/auth/register', { username, email, password, referralCode: code, discord: discord.trim() });
-      login(data.token, data.user);
-      setSuccess('Account created successfully. Redirecting...');
-      setTimeout(() => navigate('/'), 2000);
+      if (data?.status === 'verification_required') {
+        setVerifyMode(true);
+        setSuccess('Check your email for the verification code');
+      } else {
+        login(data.token, data.user);
+        setSuccess('Account created successfully. Redirecting...');
+        setTimeout(() => navigate('/'), 2000);
+      }
     } catch (err: any) {
       console.error('Registration error:', err);
       const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost';
@@ -235,6 +242,7 @@ export default function Register() {
           </div>
         )}
 
+        {!verifyMode ? (
         <form onSubmit={handleSubmit} className="space-y-5">
           <Input
             label="Username"
@@ -319,6 +327,39 @@ export default function Register() {
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
+        ) : (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError('');
+              setLoading(true);
+              try {
+                const resp = await api.post('/auth/verify', { email, code: verifyCode });
+                login(resp.token, resp.user);
+                setSuccess('Email verified. Redirecting...');
+                setTimeout(() => navigate('/'), 1500);
+              } catch (err: any) {
+                setError(err?.message || 'Verification failed');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="space-y-5"
+          >
+            <Input
+              label="Verification Code"
+              type="text"
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value)}
+              placeholder="Enter the code sent to your email"
+              required
+            />
+            <Button type="submit" disabled={loading} full size="lg">
+              {loading ? 'Verifying…' : 'Verify Email'}
+            </Button>
+            <div className="text-xs text-gray-400">Didn’t receive the code? Check spam or wait a minute.</div>
+          </form>
+        )}
 
         <p className="text-center text-gray-400 mt-6">
           Already have an account?{' '}
