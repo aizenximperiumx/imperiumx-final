@@ -5,7 +5,6 @@ import { generateToken, generateReferralCode } from '../lib/utils';
 import { authenticate, requireRole } from '../middleware/auth';
 import { z } from 'zod';
 import { logEvent } from '../lib/audit';
-import { sendMail } from '../lib/mail';
 
 const router = Router();
 
@@ -57,8 +56,6 @@ router.post('/register', async (req, res) => {
       welcomePoints = 1000;
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(Date.now() + 60 * 60 * 1000);
     const user = await prisma.user.create({
       data: {
         username,
@@ -71,9 +68,6 @@ router.post('/register', async (req, res) => {
         referralCode,
         referredBy,
         discord,
-        emailVerified: false,
-        verificationCode: code,
-        verificationExpires: expires,
       },
     });
 
@@ -88,16 +82,23 @@ router.post('/register', async (req, res) => {
       data: { userId: user.id, delta: welcomePoints, reason: 'welcome_bonus', meta: {} },
     });
 
-    // Generate token
-    try {
-      const html = `<div style="font-family:Arial;padding:16px">
-        <h2>Verify your email</h2>
-        <p>Your code: <strong>${code}</strong></p>
-        <p>The code expires in 60 minutes.</p>
-      </div>`;
-      await sendMail(user.email, 'ImperiumX: Email Verification Code', html);
-    } catch {}
-    res.status(201).json({ status: 'verification_required' });
+    // Generate token and return user immediately
+    const token = generateToken(user.id, user.role);
+    res.status(201).json({
+      message: 'Account created successfully',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        points: user.points,
+        tier: user.tier,
+        level: user.level,
+        referralCode: user.referralCode,
+        discord: user.discord,
+      },
+    });
     try { await logEvent('user.register', user.id, { referralCode: providedCode || null, welcomePoints, discord }); } catch {}
   } catch (error) {
     console.error('Register error:', error);
@@ -134,9 +135,6 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    if (!user.emailVerified) {
-      return res.status(403).json({ error: 'Email not verified' });
-    }
     // Generate token
     const token = generateToken(user.id, user.role);
 
@@ -161,41 +159,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.post('/verify', async (req, res) => {
-  try {
-    const schema = z.object({ email: z.string().email(), code: z.string().min(4).max(10) });
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: 'Invalid input' });
-    const { email, code } = parsed.data;
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    if (user.emailVerified) {
-      const token = generateToken(user.id, user.role);
-      return res.json({ message: 'Already verified', token, user: {
-        id: user.id, username: user.username, email: user.email, role: user.role,
-        points: user.points, tier: user.tier, level: user.level, referralCode: user.referralCode, discord: user.discord,
-      } });
-    }
-    const valid = user.verificationCode === code && user.verificationExpires && new Date(user.verificationExpires).getTime() > Date.now();
-    if (!valid) return res.status(400).json({ error: 'Invalid or expired code' });
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerified: true, verificationCode: null, verificationExpires: null },
-    });
-    const token = generateToken(updated.id, updated.role);
-    try { await logEvent('user.verify', updated.id, {}); } catch {}
-    res.json({
-      message: 'Email verified',
-      token,
-      user: {
-        id: updated.id, username: updated.username, email: updated.email, role: updated.role,
-        points: updated.points, tier: updated.tier, level: updated.level, referralCode: updated.referralCode, discord: updated.discord,
-      },
-    });
-  } catch (e) {
-    res.status(500).json({ error: 'Verification failed' });
-  }
-});
+// Email verification disabled for now
 
 // Get current user
 router.get('/me', authenticate, async (req: any, res) => {
